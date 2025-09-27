@@ -1,0 +1,127 @@
+-- Q.1. List the names of the Students who have not enrolled for Java course.
+
+select distinct s.name , c.coursename from 
+coursemaster c join enrollmentmaster e 
+on c.cid = e.cid 
+join studentmaster s on e.sid = s.sid
+where 
+c.coursename != "Java";
+
+select name from studentmaster where sid in (
+		select sid from enrollmentmaster where cid not in(
+				select cid from coursemaster where coursename = 'Java'
+        )
+);
+
+-- Q.2. List the name of the advanced course where the enrollment by foreign students is the highest.
+
+select * from coursemaster;
+select * from enrollmentmaster;
+select * from studentmaster;
+
+with abc as (
+select c.coursename,count(*) cnt from 
+coursemaster c inner join enrollmentmaster e 
+on c.cid = e.cid
+inner join studentmaster s
+on e.sid = s.sid
+where s.origin = 'F' and c.category = 'A'
+group by coursename
+)
+select coursename from abc where cnt = (select max(cnt) from abc) ;
+
+-- Q.3. List the names of the Undergraduate, local students who have got a “B” grade in any basic course.
+
+select * from coursemaster;
+select * from enrollmentmaster;
+select * from studentmaster;
+
+select s.name from 
+studentmaster s inner join enrollmentmaster e
+on s.sid =  e.sid
+inner join coursemaster c 
+on e.cid = c.cid 
+where s.type = 'U' and s.origin = 'L' and e.grade = 'B' and c.category = 'B';
+
+-- Q.4. List the names of the courses for which no student has enrolled in the month of SEPT 2022.
+
+select * from coursemaster;
+select * from enrollmentmaster;
+select * from studentmaster;
+
+with abc as (
+select c.cid as id, c.coursename from 
+coursemaster c inner join enrollmentmaster e
+on c.cid = e.cid
+inner join studentmaster s
+on e.sid = s.sid
+where e.doe not between '2022-09-01' and '2022-09-31')
+select * from abc where id is null;
+
+-- Q.5. List name, Number of Enrollments and Popularity for all Courses. Popularity has to be displayed as “High” if number of enrollments is higher than 5,
+-- “Medium” if greater than or equal to 3 and less than or equal to 5, and “Low” if the no. is less than 3.
+
+select * from coursemaster;
+select * from enrollmentmaster;
+select * from studentmaster;
+
+with cte as
+(select  c.coursename,count(*) as cnt from 
+coursemaster c inner join enrollmentmaster e
+on c.cid = e.cid
+inner join studentmaster s
+on e.sid = s.sid
+group by c.coursename)
+select coursename,cnt,
+case
+when cnt > 5 then "High"
+when cnt between 3 and 5 then "Medium"
+else "Low"
+end as popularity from cte order by coursename;
+
+-- Q.6. List the names of the Local students who have enrolled for exactly 2 basic courses.
+
+with cte as
+(select s.name , count(*) as cnt
+from studentmaster s inner join enrollmentmaster e
+on s.sid = e.sid
+inner join coursemaster c on
+e.cid = c.cid
+where c.category = "B" and s.origin = "L"
+group by name)
+select * from cte where cnt=2;
+
+--  List the names of the Courses enrolled by all (every) students.
+
+select distinct c.coursename 
+from coursemaster c left join enrollmentmaster e
+on c.cid = e.cid
+where c.cid is not null order by c.coursename;
+
+-- Q.8. For those enrollments for which fee have been waived, when fwf = 1 means yes ,provide the names of students who have got ‘O’ grade.
+
+select * from coursemaster;
+select * from enrollmentmaster;
+select * from studentmaster;
+
+select distinct s.name ,s.sid from studentmaster s inner join enrollmentmaster e
+on s.sid = e.sid 
+where e.fwf = 1 and e.grade = "O";
+
+-- Q.9. List the names of the foreign, undergraduate students who have got grade ‘O’ in any Advanced course.
+
+select s.name ,s.sid from 
+studentmaster s inner join enrollmentmaster e
+on s.sid = e.sid inner join
+coursemaster c on
+e.cid = c.cid
+where s.origin = 'F' and s.type = 'U' and e.grade = 'O' and c.category = 'A';
+
+-- Q.10. List the course name, total no. of enrollments in the month of April 2021.
+
+select c.coursename,count(*) as cnt 
+from coursemaster c
+inner join enrollmentmaster e 
+on c.cid = e.cid
+where month(doe) = 4 and year(doe) = 2021
+group by coursename order by coursename;
